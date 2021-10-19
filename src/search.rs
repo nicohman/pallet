@@ -23,8 +23,8 @@ pub struct FieldsContainer(pub Vec<tantivy::schema::Field>);
 pub struct Index<T> {
     pub id_field: tantivy::schema::Field,
     pub fields: T,
-    default_search_fields: Vec<tantivy::schema::Field>,
-    inner: tantivy::Index,
+    pub default_search_fields: Vec<tantivy::schema::Field>,
+    pub inner: tantivy::Index,
     pub(crate) writer: Mutex<Option<tantivy::IndexWriter>>,
     writer_accessor:
         Box<dyn Fn(&tantivy::Index) -> tantivy::Result<tantivy::IndexWriter> + Send + Sync>,
@@ -182,10 +182,14 @@ impl<T> IndexBuilder<T> {
         let fields = fields_builder(&mut schema_builder)?;
 
         let id_field = match self.id_field_name.as_ref() {
-            Some(id_field_name) => schema_builder
-                .add_u64_field(id_field_name, tantivy::schema::INDEXED | tantivy::schema::FAST),
-            None => schema_builder
-                .add_u64_field("__id__", tantivy::schema::INDEXED | tantivy::schema::FAST),
+            Some(id_field_name) => schema_builder.add_u64_field(
+                id_field_name,
+                tantivy::schema::INDEXED | tantivy::schema::FAST | tantivy::schema::STORED,
+            ),
+            None => schema_builder.add_u64_field(
+                "__id__",
+                tantivy::schema::INDEXED | tantivy::schema::FAST | tantivy::schema::STORED,
+            ),
         };
 
         let schema = schema_builder.build();
